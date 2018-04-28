@@ -19,9 +19,12 @@ var testcases = []testcase{
 	{optstring: "aa", err: "duplicate option specifiers for 'a'"},
 	{optstring: "a:#", err: "option type specifier without option"},
 	{optstring: "a?", err: "invalid option specifier '?'"},
+	{optstring: "a", args: []string{"-aa"}, err: "duplicate option 'a'"},
 	{optstring: "ab", args: []string{"foo"}, remaining: []string{"foo"}},
 	{optstring: "a", args: []string{"-a", "foo"}, remaining: []string{"foo"},
 		opts: map[string]Option{"a": Option{}}},
+	{optstring: "a+", args: []string{"-aa", "foo"}, remaining: []string{"foo"},
+		opts: map[string]Option{"a": Option{Int: 2}}},
 	{optstring: "n#", args: []string{"-n", "2", "foo"}, remaining: []string{"foo"},
 		opts: map[string]Option{"n": Option{Value: "2", Int: 2}}},
 	{optstring: "n.", args: []string{"-n", "2", "foo"}, remaining: []string{"foo"},
@@ -58,9 +61,14 @@ func TestCases(t *testing.T) {
 			t.Logf("missing expected error: '%s'", tc.err)
 			t.Fail()
 		}
-		if err != nil && err.Error() != tc.err {
-			t.Logf("error mismatch: expected '%s', got '%s'", tc.err, err.Error())
-			t.Fail()
+		if err != nil {
+			if err.Error() != tc.err {
+				t.Logf("error mismatch: expected '%s', got '%s'", tc.err, err.Error())
+				t.Fail()
+			}
+			// if an error occurred, and it was expected, don't check return
+			// value, because we don't specify that
+			continue
 		}
 		for k, v := range tc.opts {
 			if opts[k] == nil || *opts[k] != v {

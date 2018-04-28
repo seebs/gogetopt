@@ -22,6 +22,15 @@ type Option struct {
 // Options is a map of the options found by GetOpt. An option
 // is present only if it was specified in the arguments parsed.
 type Options map[string]*Option
+
+// Seen is a convenience function to allow a query for whether
+// an option has been set without using the ", ok" format, thus
+// allowing a check inline in an expression.
+func (o Options) Seen(s string) bool {
+	_, ok := o[s]
+	return ok
+}
+
 type optType int
 
 type opt struct {
@@ -41,6 +50,7 @@ const (
 	optString
 	optInt
 	optFloat
+	optCount
 )
 
 type optMap map[string]*opt
@@ -67,6 +77,8 @@ func parseOpt(optstring string) (optMap, error) {
 			err = prev.setType(optInt)
 		case '.':
 			err = prev.setType(optFloat)
+		case '+':
+			err = prev.setType(optCount)
 		default:
 			return nil, fmt.Errorf("invalid option specifier '%s'", c)
 		}
@@ -108,12 +120,21 @@ ArgLoop:
 				err = fmt.Errorf("unknown option '%s'", flag)
 				break ArgLoop
 			}
-			if opts[flag] != nil {
-				err = fmt.Errorf("duplicate option '%s'", flag)
-				break ArgLoop
+			opt, ok := opts[flag]
+			if !ok {
+				opt = &Option{}
+				opts[flag] = opt
+			} else {
+				if known[flag].typ != optCount {
+					err = fmt.Errorf("duplicate option '%s'", flag)
+					break ArgLoop
+				}
 			}
-			opts[flag] = &Option{}
 			if known[flag].typ == optBool {
+				continue
+			}
+			if known[flag].typ == optCount {
+				opt.Int++
 				continue
 			}
 			if next >= len(args) {

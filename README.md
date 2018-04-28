@@ -61,16 +61,22 @@ type Option {
 type Options map[string]*Option
 ```
 
+The Options type also provides a `.Seen(s)` method which checks
+whether an option is present, because I think that's prettier than
+`!= nil`.
+
 ### Option Strings
 
 An option string is a list of allowed options. Letters are
-allowed options. A letter followed by punctuation indicates
-an option which can take an additional parameter as a value:
+allowed options.  A letter followed by punctuation indicates
+an option which can take an additional parameter as a value,
+or which can be specified more than once:
 
 ```
 :	Any string
 #	Integer number
 .	Floating-point number
++	Can be specified multiple times (but takes no argument)
 ```
 
 Flags which take a value consume additional arguments
@@ -89,6 +95,11 @@ b: bar
 c: baz
 ```
 
+Options with `+` specified may be present multiple times, and
+in that case, `opts[c].Int` will be the number of times the
+option was present. (This supports idioms like `-v` for
+verbose output, and `-vv` for more-verbose output.)
+
 The special option `--` indicates the end of option parsing,
 as does any non-option encountered.
 
@@ -99,3 +110,7 @@ parameters to `GetOpt` which are used to specify where to
 store values, but in the past I've found that this was
 not especially *useful* to me even though I always think
 it sounds neat, so I'm not doing it yet.
+
+I sort of dislike the option map being a map of pointers,
+but map members being non-addressable makes that seem less
+bad than at least some alternatives.

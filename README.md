@@ -45,11 +45,13 @@ func main() {
 
 ### Invocation
 
-`opts, remaining, err := getopt.GetOpt(args, optstring)'
+`opts, remaining, err := gogetopt.GetOpt(args, optstring)`
 
 Takes a slice of strings and an option string, returns a map of provided
 options, remaining arguments as a slice of strings, and an error if
-an error occurred.
+an error occurred. If you are using `os.Args`, you probably want
+to specify `os.Args[1:]` to avoid the command's name being treated
+as a parameter.
 
 ```go
 type Option {
